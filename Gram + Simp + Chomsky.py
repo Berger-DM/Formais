@@ -2,6 +2,8 @@
 import collections
 from collections import defaultdict
 import copy
+import tkinter as tk
+
 # Variáveis Globais
 
 
@@ -84,17 +86,21 @@ def get_gramatica():
 
     rgrs.move_to_end(inicial, last=False)
 
+    printaux = ''
     qtrpl = 'G = ({'
     saux = ', '.join(e for e in vrvs)
     qtrpl += saux + '},{'
     saux = ', '.join(e for e in trmns)
     qtrpl += saux + '},P,' + init[0] + ')'
-    print('Gramática Encontrada.')
-    print(qtrpl)
-    print('Com P = {')
+    printaux += 'Gramática Encontrada.\n'
+    printaux += qtrpl
+    printaux += '\nCom P = {\n'
     for j in rgrs:
-        print(j + ' -> ' + '| '.join(e for e in rgrs[j]))
-    print('}')
+        if j != init[0]:
+            printaux += '\n'
+        printaux = printaux + j + ' -> ' + '| '.join(e for e in rgrs[j])
+    printaux += '}'
+    tv1.set(printaux)
 
     return 0
 
@@ -400,39 +406,54 @@ def chomsky(regras):
     return 0
 
 
-def printa1(rgrs):
-    print('\nProducao apos etapa 1:')
-    print('Com P\' = {')
-    for j in rgrs:
-        print(j + ' -> ' + '| '.join(e for e in rgrs[j]))
-    print('}')
-    return 0
-
-
-def printa2(rgrs):
-    print('\nProducao apos Chomsky:')
+def printa2(regras):
+    printfnc = ''
+    printfnc += '\nFNC:\n'
     qtrpl = 'G = ({'
     saux = ', '.join(e for e in vrvs)
+    print(len(saux))
     qtrpl += saux + '},{'
     saux = ', '.join(e for e in trmns)
     qtrpl += saux + '},P,' + inicial + ')'
-    print('Gramática Encontrada.')
-    print(qtrpl)
-    print('Com P = {')
-    for j in rgrs:
-        print(j + ' -> ' + '| '.join(e for e in rgrs[j]))
-    print('}')
+    printfnc += qtrpl
+    printfnc += '\nCom P = {\n'
+    for j in regras:
+        if j != inicial:
+            printfnc += '\n'
+        printfnc = printfnc + j + ' -> ' + '| '.join(e for e in regras[j])
+    printfnc += '}'
+    tv2.set(printfnc)
     return 0
 
+root = tk.Tk()
+tv1 = tk.StringVar()
+tv2 = tk.StringVar()
+tv3 = tk.StringVar()
+f0 = tk.Frame(root)
+f1 = tk.Frame(f0)
+f2 = tk.Frame(f0)
+f3 = tk.Frame(root, padx=5)
+l1 = tk.Label(f1, font='Verdana', textvariable=tv1, justify='left')
+l2 = tk.Label(f2, font='Verdana', textvariable=tv2, justify='left')
+l3 = tk.Label(f3, font='Verdana', text='Palavra a ser reconhecida: ', justify='left')
+e3 = tk.Entry(f3, font='Verdana', width=20, textvariable=tv3)
+b3 = tk.Button(f3, font='Verdana', text='Testar')
 
 get_gramatica()
 vazio = derivacoes_vazias(rgrs)
 trocar_producoes(rgrs, vazio)
-printa1(rgrs)
 fecho_transitivo(rgrs)
-# aux_dict = copy.deepcopy(rgrs)
 nao_derivam_trmns(rgrs)
-for i in rgrs:
-    print(i + ": " + str(rgrs[i]))
 chomsky(rgrs)
 printa2(rgrs)
+
+f0.pack(expand=1, anchor='w',side='left')
+f1.pack(expand=1, anchor='w')
+f2.pack(expand=1, anchor='w')
+f3.pack(expand=1, anchor='n', side='left')
+l1.pack(side='left')
+l2.pack(side='left')
+l3.pack(side='left')
+e3.pack(side='left')
+b3.pack(side='left')
+root.mainloop()
