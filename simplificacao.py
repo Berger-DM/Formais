@@ -280,7 +280,7 @@ def nao_derivam_trmns(regras):
             if xdict[key][j] in trmns:
                 flags[key] = 1
                 grntd.append(key)
-    # marca os flags apropriados e remove de uma lista auxiliar de variáveis as que tem alcançam diretamente
+    # marca os flags apropriados e remove de uma lista auxiliar de variáveis as que alcançam diretamente
     vrs = copy.deepcopy(vrvs)
     vrs.reverse()
     for elem in grntd:
