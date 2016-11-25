@@ -81,9 +81,9 @@ def get_gramatica():
     init = smbls[2]
     global inicial
     inicial = init[0]
-       
+
     rgrs.move_to_end(inicial, last=False)
-    
+
     qtrpl = 'G = ({'
     saux = ', '.join(e for e in vrvs)
     qtrpl += saux + '},{'
@@ -97,7 +97,7 @@ def get_gramatica():
     print('}')
 
     return 0
-    
+
 
 def derivacoes_vazias(regras):
     """Etapa: exclusao de producoes vazias. Encontra as variaveis que levam a producoes vazias
@@ -117,11 +117,11 @@ def derivacoes_vazias(regras):
                 aux_list.append(e)
 
         # se houver, retira o vazio
-        if flag == 1:        
+        if flag == 1:
             del regras[j][:]
             for i in aux_list:
                 rgrs[j].append(i)
-            flag = 0            
+            flag = 0
         del aux_list[:]
 
     # Variaveis que derivam palavra vazia indiretamente      
@@ -154,7 +154,7 @@ def trocar_producoes(regras, vazio):
                         regras[j].append(aux2)
                     else:
                         pass
-                    
+
                     # adiciona producao vazia a variavel inicial
                     if aux2 == '' and j == inicial and 'V' not in regras[j]:
                         regras[j].append('V')
@@ -200,11 +200,11 @@ def fecho_transitivo(regras):
                 aux_list.append(e)
 
         del regras[j][:]
-        for i in aux_list:            
+        for i in aux_list:
             regras[j].append(i)
         del aux_list[:]
-    return 0      
-  
+    return 0
+
 
 def vrvs_inacessiveis(regras):
     """Etapa: exclusao de producoes inuteis. Exclui variaveis nao alcancadas
@@ -256,9 +256,6 @@ def path(dct, smbl, reached):
     return rchd
 
 
-
-
-
 def nao_derivam_trmns(regras):
     """Etapa: exclusao de producoes inuteis. Exclui producoes com variaveis que nao derivam
     uma cadeia de terminais, direta ou indiretamente"""
@@ -291,7 +288,7 @@ def nao_derivam_trmns(regras):
         for j in range(len(xdict[key])):
             if key not in xdict[key][j]:
                 xcld = 1
-            # print(key + " " + str(xcld))
+                # print(key + " " + str(xcld))
         if xcld == -1:
             # mesmo depois de todas a iterações necessárias não chegou em nada além dele próprio, é loop, remove
             dltd.append(key)
@@ -315,12 +312,10 @@ def nao_derivam_trmns(regras):
     reach = path(xdict, 'S', st)
     for key, value in xdict.items():
         if key not in reach:  # se não for alcançada a partir do inicial, é removida
-            del xdict[key]    # e como não estava em nenhuma produção efetiva não há preocupação com o resto.
-
+            del xdict[key]  # e como não estava em nenhuma produção efetiva não há preocupação com o resto.
 
 
 def chomsky(regras):
-
     new_vars = {}
     trmns_auxs = []
     tamanhos = dict()
@@ -330,33 +325,34 @@ def chomsky(regras):
 
     for j in regras:
         for e in regras[j]:
-           index+=1
-           for t in trmns:
-               if t == e: #se for um terminal sozinho
+            index += 1
+            for t in trmns:
+                if t == e:  # se for um terminal sozinho
                     pass
-               elif t in e: #terminal nao sozinho
-                   
-                   ind = e.find(t)#acha a primeira posicao do terminal
+                elif t in e:  # terminal nao sozinho
 
-                   for tam in tamanhos:
-                       auxi = int(tamanhos[tam])
-                       auxj = int(tamanhos[t])
+                    ind = e.find(t)  # acha a primeira posicao do terminal
 
-                       
-                       if e[ind:ind+auxi] in trmns and auxi != auxj: #testa se é uma substring de outro terminal
-                           pass
+                    for tam in tamanhos:
+                        auxi = int(tamanhos[tam])
+                        auxj = int(tamanhos[t])
 
-                       else:
-                               aux = e[:ind]+'T'+e[ind:] #acrescenta 'T' antes do terminal para criar nova variavel
-                               regras[j][index]= e.replace(e, aux) #substitui terminal  pela nova variavel
-                               aux2 = 'T'+t
+                        if e[ind:ind + auxi] in trmns and auxi != auxj:  # testa se é uma substring de outro terminal
+                            pass
 
-                               if aux2 not in vrvs: #atualiza a gramatica
-                                   vrvs.append(aux2)
+                        else:
+                            aux = e[:ind] + 'T' + e[ind:]  # acrescenta 'T' antes do terminal para criar nova variavel
+                            regras[j][index] = e.replace(e, aux)  # substitui terminal  pela nova variavel
+                            aux2 = 'T' + t
+                            print(aux2)
 
-                               if t not in trmns_auxs: #novos terminais a serem adicionados as regras
-                                   trmns_auxs.append(t)
-                               
+                            if aux2 not in vrvs:  # atualiza a gramatica
+                                vrvs.append(aux2)
+
+                            if t not in trmns_auxs:  # novos terminais a serem adicionados as regras
+                                trmns_auxs.append(t)
+                            regras[aux2] = []
+                            regras[aux2].append(t)
         index = -1
 
     num_new_vars = 0
@@ -389,6 +385,7 @@ def chomsky(regras):
                     nv = 'X' + str(num_new_vars)
                     new_vars[nv] = combo
     # print(new_vars)
+    new_vars = collections.OrderedDict(sorted(new_vars.items(), key=lambda t: t[0]))
     for vr, cmb in new_vars.items():
         for key in regras.keys():
             for each in range(len(regras[key])):
@@ -400,23 +397,20 @@ def chomsky(regras):
         regras[vr] = []
         regras[vr].append(cmb)
 
-
-
-
     return 0
 
-               
-    
+
 def printa1(rgrs):
-    print ('\nProducao apos etapa 1:')
+    print('\nProducao apos etapa 1:')
     print('Com P\' = {')
     for j in rgrs:
         print(j + ' -> ' + '| '.join(e for e in rgrs[j]))
     print('}')
     return 0
 
+
 def printa2(rgrs):
-    print ('\nProducao apos Chomsky:')
+    print('\nProducao apos Chomsky:')
     qtrpl = 'G = ({'
     saux = ', '.join(e for e in vrvs)
     qtrpl += saux + '},{'
@@ -442,9 +436,3 @@ for i in rgrs:
     print(i + ": " + str(rgrs[i]))
 chomsky(rgrs)
 printa2(rgrs)
-
-
-
-
-
-
