@@ -3,10 +3,12 @@ import collections
 from collections import defaultdict
 import copy
 import tkinter as tk
+from tkinter import filedialog
 
 # Variáveis Globais
 
 
+show_index = 0
 smbls = []
 rgrs = collections.OrderedDict()
 vrvs = []
@@ -22,13 +24,30 @@ smbls.append([])
 smbls.append(rgrs)
 
 
-def get_gramatica():
+def print_gramatica(regras, tv):
+    printaux = ''
+    qtrpl = 'G = ({'
+    saux = ', '.join(e for e in vrvs)
+    qtrpl += saux + '},{'
+    saux = ', '.join(e for e in trmns)
+    qtrpl += saux + '},P,' + inicial + ')'
+    printaux += qtrpl
+    printaux += '\nCom P = {\n'
+    for j in regras:
+        if j != inicial:
+            printaux += '\n'
+        printaux = printaux + j + ' -> ' + '| '.join(e for e in regras[j])
+    printaux += '}'
+    tv.set(printaux)
+
+
+def get_gramatica(fl):
     global rgrs
     z = -1
-    with open('gramatica.txt', 'a') as file:
+    with open(fl, 'a') as file:
         file.write('\t')
 
-    with open('gramatica.txt') as file:
+    with open(fl) as file:
         for line in file:
             if line[0] == '#':
                 i = 0
@@ -86,22 +105,6 @@ def get_gramatica():
 
     rgrs.move_to_end(inicial, last=False)
 
-    printaux = ''
-    qtrpl = 'G = ({'
-    saux = ', '.join(e for e in vrvs)
-    qtrpl += saux + '},{'
-    saux = ', '.join(e for e in trmns)
-    qtrpl += saux + '},P,' + init[0] + ')'
-    printaux += 'Gramática Encontrada.\n'
-    printaux += qtrpl
-    printaux += '\nCom P = {\n'
-    for j in rgrs:
-        if j != init[0]:
-            printaux += '\n'
-        printaux = printaux + j + ' -> ' + '| '.join(e for e in rgrs[j])
-    printaux += '}'
-    tv1.set(printaux)
-
     return 0
 
 
@@ -110,7 +113,6 @@ def derivacoes_vazias(regras):
     direta ou indiretamente"""
     aux_list = []
     vazio = []
-    ind = -1
     flag = 0
 
     # Variaveis que derivam palavra vazia diretamente  
@@ -172,8 +174,6 @@ def fecho_transitivo(regras):
     """Etapa: exclusao de producoes simples. Cria fecho transitivo"""
     fecho = defaultdict(list)
     aux_list = []
-    ind = -1
-    ind2 = -1
 
     # variaveis unitarias diretas
     for j in regras:
@@ -266,7 +266,6 @@ def nao_derivam_trmns(regras):
     """Etapa: exclusao de producoes inuteis. Exclui producoes com variaveis que nao derivam
     uma cadeia de terminais, direta ou indiretamente"""
     # print(regras)
-    to_xcld = -1
     flags = {}
     grntd = []
     dltd = []
@@ -320,6 +319,11 @@ def nao_derivam_trmns(regras):
         if key not in reach:  # se não for alcançada a partir do inicial, é removida
             del xdict[key]  # e como não estava em nenhuma produção efetiva não há preocupação com o resto.
 
+    global rgrs
+    for key, value in xdict.items():
+        rgrs[key] = value
+    print(rgrs)
+
 
 def chomsky(regras):
     new_vars = {}
@@ -334,6 +338,7 @@ def chomsky(regras):
             index += 1
             for t in trmns:
                 if t == e:  # se for um terminal sozinho
+                    print(t)
                     pass
                 elif t in e:  # terminal nao sozinho
 
@@ -350,7 +355,7 @@ def chomsky(regras):
                             aux = e[:ind] + 'T' + e[ind:]  # acrescenta 'T' antes do terminal para criar nova variavel
                             regras[j][index] = e.replace(e, aux)  # substitui terminal  pela nova variavel
                             aux2 = 'T' + t
-                            print(aux2)
+                            # print(aux2)
 
                             if aux2 not in vrvs:  # atualiza a gramatica
                                 vrvs.append(aux2)
@@ -360,6 +365,7 @@ def chomsky(regras):
                             regras[aux2] = []
                             regras[aux2].append(t)
         index = -1
+    print_gramatica(rgrs, tv0e)
 
     num_new_vars = 0
     for key, value in regras.items():
@@ -371,7 +377,7 @@ def chomsky(regras):
                     if regras[key][i].count(k) > 1:
                         count += 1
             if count > 2:
-                print(regras[key][i])
+                # print(regras[key][i])
                 lista_switch = []
                 for k in vrvs:
                     if k in regras[key][i]:
@@ -383,15 +389,15 @@ def chomsky(regras):
                                 if aux.startswith(l):
                                     lista_switch.append(l)
                 combo = lista_switch[0] + lista_switch[1]
-                print(combo)
+                # print(combo)
                 if combo in new_vars.values():
-                    print('já existe uma variavel para esta combinação')
+                    pass
+                    # print('já existe uma variavel para esta combinação')
                 else:
                     num_new_vars += 1
                     nv = 'X' + str(num_new_vars)
                     new_vars[nv] = combo
-    # print(new_vars)
-    new_vars = collections.OrderedDict(sorted(new_vars.items(), key=lambda t: t[0]))
+    new_vars = collections.OrderedDict(sorted(new_vars.items(), key=lambda z: z[0]))
     for vr, cmb in new_vars.items():
         for key in regras.keys():
             for each in range(len(regras[key])):
@@ -406,54 +412,87 @@ def chomsky(regras):
     return 0
 
 
-def printa2(regras):
-    printfnc = ''
-    printfnc += '\nFNC:\n'
-    qtrpl = 'G = ({'
-    saux = ', '.join(e for e in vrvs)
-    print(len(saux))
-    qtrpl += saux + '},{'
-    saux = ', '.join(e for e in trmns)
-    qtrpl += saux + '},P,' + inicial + ')'
-    printfnc += qtrpl
-    printfnc += '\nCom P = {\n'
-    for j in regras:
-        if j != inicial:
-            printfnc += '\n'
-        printfnc = printfnc + j + ' -> ' + '| '.join(e for e in regras[j])
-    printfnc += '}'
-    tv2.set(printfnc)
-    return 0
+def earley_parse(regras, word):
+    w = word
+    d = regras
+    stts = collections.OrderedDict()
+    stts[0] = collections.OrderedDict()
+    stts[0][0] = []
+
+
+def change_lbl_up():
+    global show_index
+    l = [l0a, l0b, l0c, l0d, l0e, l0f]
+    if show_index < 5:
+        for i in l:
+            i.pack_forget()
+        show_index += 1
+        l[show_index].pack()
+
+
+def change_lbl_down():
+    global show_index
+    l = [l0a, l0b, l0c, l0e, l0f]
+    if show_index > 0:
+        for i in l:
+            i.pack_forget()
+        show_index -= 1
+        l[show_index].pack()
+
 
 root = tk.Tk()
-tv1 = tk.StringVar()
-tv2 = tk.StringVar()
+tv0a = tk.StringVar()
+tv0b = tk.StringVar()
+tv0c = tk.StringVar()
+tv0d = tk.StringVar()
+tv0e = tk.StringVar()
+tv0f = tk.StringVar()
 tv3 = tk.StringVar()
 f0 = tk.Frame(root)
-f1 = tk.Frame(f0)
-f2 = tk.Frame(f0)
-f3 = tk.Frame(root, padx=5)
-l1 = tk.Label(f1, font='Verdana', textvariable=tv1, justify='left')
-l2 = tk.Label(f2, font='Verdana', textvariable=tv2, justify='left')
-l3 = tk.Label(f3, font='Verdana', text='Palavra a ser reconhecida: ', justify='left')
-e3 = tk.Entry(f3, font='Verdana', width=20, textvariable=tv3)
-b3 = tk.Button(f3, font='Verdana', text='Testar')
+f0a = tk.Frame(f0, padx=5)
+f0b = tk.Frame(f0, padx=5)
+f1 = tk.Frame(root, padx=5)
+f1a = tk.Frame(f1)
+f1b - tk.Frame(f1)
+l0a = tk.Label(f0a, font='Verdana', textvariable=tv0a, justify='left')
+l0b = tk.Label(f0a, font='Verdana', textvariable=tv0b, justify='left')
+l0c = tk.Label(f0a, font='Verdana', textvariable=tv0c, justify='left')
+l0d = tk.Label(f0a, font='Verdana', textvariable=tv0d, justify='left')
+l0e = tk.Label(f0a, font='Verdana', textvariable=tv0e, justify='left')
+l0f = tk.Label(f0a, font='Verdana', textvariable=tv0f, justify='left')
+b0a = tk.Button(f0b, font='Verdana', text='Etapa Anterior', command=change_lbl_down)
+b0b = tk.Button(f0b, font='Verdana', text='Etapa Seguinte', command=change_lbl_up)
+l1 = tk.Label(f1a, font='Verdana', text='Palavra a ser reconhecida: ', justify='left')
+e1 = tk.Entry(f1a, font='Verdana', width=20, textvariable=tv3)
+b1 = tk.Button(f1a, font='Verdana', text='Testar')
 
-get_gramatica()
+lbls = [l0a, l0b, l0c, l0d, l0e, l0f]
+dirname = filedialog.askdirectory(parent=root, initialdir="/", title='Selecione o Diretório:')
+rqv = filedialog.askopenfile(parent=root, mode='rb', initialdir=dirname, title='Escolha o Arquivo:')
+rqv = str(rqv).rsplit("'")[1]
+get_gramatica(rqv)
+print_gramatica(rgrs, tv0a)
 vazio = derivacoes_vazias(rgrs)
 trocar_producoes(rgrs, vazio)
+print_gramatica(rgrs, tv0b)
 fecho_transitivo(rgrs)
-nao_derivam_trmns(rgrs)
+print_gramatica(rgrs, tv0c)
+aux_dict = copy.deepcopy(rgrs)
+nao_derivam_trmns(aux_dict)
+print_gramatica(rgrs, tv0d)
 chomsky(rgrs)
-printa2(rgrs)
+print_gramatica(rgrs, tv0f)
 
-f0.pack(expand=1, anchor='w',side='left')
-f1.pack(expand=1, anchor='w')
-f2.pack(expand=1, anchor='w')
-f3.pack(expand=1, anchor='n', side='left')
+f0.pack(expand=1, anchor='w', side='left')
+f0a.pack()
+l0a.pack()
+f0b.pack()
+b0a.pack(anchor='w', side='left')
+b0b.pack(anchor='e', side='left')
+f1.pack(expand=1, anchor='n', side='left')
+f1a.pack(expand=1)
+f1b.pack(expand=1)
 l1.pack(side='left')
-l2.pack(side='left')
-l3.pack(side='left')
-e3.pack(side='left')
-b3.pack(side='left')
-root.mainloop()
+e1.pack(side='left')
+b1.pack(side='left')
+root.mainloop()	
