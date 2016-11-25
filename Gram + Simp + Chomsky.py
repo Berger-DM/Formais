@@ -322,7 +322,7 @@ def nao_derivam_trmns(regras):
     global rgrs
     for key, value in xdict.items():
         rgrs[key] = value
-    print(rgrs)
+    # print(rgrs)
 
 
 def chomsky(regras):
@@ -404,7 +404,8 @@ def chomsky(regras):
                 # print(cmb + " " + regras[key][each])
                 if cmb in regras[key][each]:
                     # print('troca')
-                    regras[key][each] = regras[key][each].replace(cmb, vr)
+                    if len(regras[key][each]) > 2:
+                        regras[key][each] = regras[key][each].replace(cmb, vr)
         vrvs.append(vr)
         regras[vr] = []
         regras[vr].append(cmb)
@@ -413,19 +414,23 @@ def chomsky(regras):
 
 
 def earley_parse(regras, word):
+    global rgrs
+    cur_stt = 0
     w = word
     d = regras
     stts = collections.OrderedDict()
-    stts[0] = collections.OrderedDict()
-    stts[0][0] = []
+    stts[cur_stt] = collections.OrderedDict()
+    for i in range(len(rgrs[inicial])):
+        stts[cur_stt][i] = str(inicial + '=>.' + rgrs[inicial][i] + '/' + str(cur_stt))
+    print(stts)
 
 
 def change_lbl_up():
     global show_index
     l = [l0a, l0b, l0c, l0d, l0e, l0f]
     if show_index < 5:
-        for i in l:
-            i.pack_forget()
+        for cada in l:
+            cada.pack_forget()
         show_index += 1
         l[show_index].pack()
 
@@ -434,8 +439,8 @@ def change_lbl_down():
     global show_index
     l = [l0a, l0b, l0c, l0e, l0f]
     if show_index > 0:
-        for i in l:
-            i.pack_forget()
+        for cada in l:
+            cada.pack_forget()
         show_index -= 1
         l[show_index].pack()
 
@@ -453,7 +458,7 @@ f0a = tk.Frame(f0, padx=5)
 f0b = tk.Frame(f0, padx=5)
 f1 = tk.Frame(root, padx=5)
 f1a = tk.Frame(f1)
-f1b - tk.Frame(f1)
+f1b = tk.Frame(f1)
 l0a = tk.Label(f0a, font='Verdana', textvariable=tv0a, justify='left')
 l0b = tk.Label(f0a, font='Verdana', textvariable=tv0b, justify='left')
 l0c = tk.Label(f0a, font='Verdana', textvariable=tv0c, justify='left')
@@ -482,6 +487,9 @@ nao_derivam_trmns(aux_dict)
 print_gramatica(rgrs, tv0d)
 chomsky(rgrs)
 print_gramatica(rgrs, tv0f)
+for i in rgrs:
+    print(i, rgrs[i])
+earley_parse(rgrs, 'aauv')
 
 f0.pack(expand=1, anchor='w', side='left')
 f0a.pack()
