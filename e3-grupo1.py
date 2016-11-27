@@ -604,7 +604,7 @@ b0a = tk.Button(f0b, font='Verdana', text='Etapa Anterior', command=change_lbl_d
 b0b = tk.Button(f0b, font='Verdana', text='Etapa Seguinte', command=change_lbl_up)
 l1 = tk.Label(f1a, font='Verdana', text='Palavra a ser reconhecida: ', justify='left')
 e1 = tk.Entry(f1a, font='Verdana', width=20, textvariable=tv3)
-b1 = tk.Button(f1a, font='Verdana', text='Testar')
+b1 = tk.Button(f1a, font='Verdana', text='Testar', command=lambda: earley(prsr_dict, inp))
 
 lbls = [l0a, l0b, l0c, l0d, l0e, l0f]
 dirname = filedialog.askdirectory(parent=root, initialdir="/", title='Selecione o Diretório:')
@@ -625,8 +625,7 @@ print_gramatica(rgrs, tv0f)
 prsr_dict = hardcopy(rgrs)
 for i in prsr_dict:
     print(i + " : " + str(prsr_dict[i]))
-inp = str(input('Informe a palavra a ser testada: '))
-earley(prsr_dict, inp)
+inp = tv3.get()
 
 f0.pack(expand=1, anchor='w', side='left')
 f0a.pack()
