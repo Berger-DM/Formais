@@ -450,9 +450,9 @@ def hardcopy(dct):
 
 def swap(tupl):
     tupla = tupl
-    ndx = tupl.index('.')
+    ndx = tupla.index('.')
     aux = ndx + 1
-    aux2 = list(tupl)
+    aux2 = list(tupla)
     aux2[ndx] = aux2[aux]
     aux2[aux] = '.'
     tupla = tuple(aux2)
@@ -499,68 +499,53 @@ def complete(l_rly, dt):
                 break
 
 
-def earley(regras, palavra):
-    t_a_rec = ''
-    termos_rec = 0
-    r = regras
-    w = str(copy.deepcopy(palavra))
-    hrly = {}
-    pred = {}
-    last_p = []
-    end_stt = len(w)
-    b_stt = 0
+def earley(regras):
+    stt = 0
     d_stt = 0
-    for i in trmns:
-        if w.startswith(i):
-            t_a_rec = i
-    print(t_a_rec)
+    chart = {}
+    b_e = {}
+    w = tv3.get()
+    print(w)
+    w1 = []
+    while w:
+        for i in trmns:
+            if w.startswith(i):
+                w1.append(i)
+                w = w.replace(i, '', 1)
+    t_a_rec = w1[0]
+    mx_stt = len(w1) + 1
+    for j in range(mx_stt):
+        chart[j] = {}
+        b_e[j] = []
+    chart[d_stt][stt] = ('GAMMA', '.', inicial, [0, 0], [], 'INITIAL')
+    b_e[d_stt] += (stt,)
+    while d_stt <= mx_stt:
+        y = b_e[d_stt][0]
+        try:
+            x = chart[d_stt][y]
+            dot_index = x.index('.')
+            if isinstance(x[dot_index + 1], list):
+                # complete
+                pass
+            elif x[dot_index + 1] in vrvs:
+                nop = -1
+                for i in range(len(chart[d_stt])):
+                    if chart[d_stt][i][0] == x[dot_index + 1]:
+                        nop = 1
+                    if nop != 1:
+                        # predict
+                        pass
+            y += 1
+        except KeyError:
+            y = b_e[d_stt][0]
+            x = chart[d_stt][y]
+            dot_index = x.index('.')
+            if x[dot_index + 1] == t_a_rec:
+                # scan
+                pass
+            y += 1
+        d_stt += 1
 
-    hrly[b_stt] = ('GAMMA', '.', inicial, '/', b_stt, d_stt)
-    pred[d_stt] = ()
-
-    while d_stt <= end_stt:
-        op = -1
-        x = hrly[b_stt]
-        # print(x)
-        index = x.index('.')
-        lm_ana = x[index + 1]
-        if lm_ana in vrvs:
-            # print(lm_ana)
-            if lm_ana not in pred[d_stt]:
-                # print(lm_ana + ' n for predict ainda')
-                pred[d_stt] = pred[d_stt] + (lm_ana,)
-                # print(type(pred[d_stt]))
-                predict(r, b_stt, d_stt, lm_ana, last_p, hrly)
-                b_stt = last_p[-1]
-                op = 1
-        if lm_ana == t_a_rec:
-            scan(x, hrly)
-            d_stt += 1
-            op = 1
-            w = w.replace(t_a_rec, '')
-            for j in trmns:
-                if w.startswith(j):
-                    t_a_rec = j
-            print(t_a_rec)
-        if lm_ana == '/':
-            if x[0] == 'GAMMA':
-                if d_stt == end_stt:
-                    print('palavra reconhecida')
-                    for i in hrly:
-                        print(hrly[i])
-                    break
-                else:
-                    print('palavra n pertence à gramatica')
-                    for i in hrly:
-                        print(hrly[i])
-                    break
-            complete(x, hrly)
-            op = 1
-        if op != 1:
-            b_stt = last_p.pop()
-        b_stt += 1
-        print(b_stt)
-        print(last_p)
 
 
 def change_lbl_up():
@@ -607,7 +592,7 @@ b0a = tk.Button(f0b, font='Verdana', text='Etapa Anterior', command=change_lbl_d
 b0b = tk.Button(f0b, font='Verdana', text='Etapa Seguinte', command=change_lbl_up)
 l1 = tk.Label(f1a, font='Verdana', text='Palavra a ser reconhecida: ', justify='left')
 e1 = tk.Entry(f1a, font='Verdana', width=20, textvariable=tv3)
-b1 = tk.Button(f1a, font='Verdana', text='Testar', command=lambda: earley(prsr_dict, inp))
+b1 = tk.Button(f1a, font='Verdana', text='Testar', command=lambda: earley(prsr_dict))
 
 lbls = [l0a, l0b, l0c, l0d, l0e, l0f]
 dirname = filedialog.askdirectory(parent=root, initialdir="/", title='Selecione o Diretório:')
@@ -628,7 +613,6 @@ print_gramatica(rgrs, tv0f)
 prsr_dict = hardcopy(rgrs)
 for i in prsr_dict:
     print(i + " : " + str(prsr_dict[i]))
-inp = tv3.get()
 
 f0.pack(expand=1, anchor='w', side='left')
 f0a.pack()
