@@ -459,10 +459,11 @@ def swap(tupl):
     return tupla
 
 
-def predict(regras, stt, d, key, dt):
+def predict(regras, stt, d, key, l, dt):
     print('predict sobre ' + key)
     count = 0
     start = len(dt)
+    l.append(start - 1)
     for i in range(len(regras[key])):
         l = regras[key][i]
         y = start + count
@@ -471,7 +472,7 @@ def predict(regras, stt, d, key, dt):
         for j in range(len(l)):
             tp = tp + (l[j],)
         tp = tp + ('/', stt, d)
-        # print(tp)
+        print(tp)
         dt[y] = tp
         count += 1
 
@@ -484,7 +485,7 @@ def scan(l_rly, dt):
     dt[y] = p
 
 
-def complete(l_rly, stt, dt):
+def complete(l_rly, dt):
     p = copy.deepcopy(l_rly)
     y = len(dt)
     for i in dt:
@@ -500,10 +501,12 @@ def complete(l_rly, stt, dt):
 
 def earley(regras, palavra):
     t_a_rec = ''
+    termos_rec = 0
     r = regras
     w = str(copy.deepcopy(palavra))
     hrly = {}
     pred = {}
+    last_p = []
     end_stt = len(w)
     b_stt = 0
     d_stt = 0
@@ -527,7 +530,8 @@ def earley(regras, palavra):
                 # print(lm_ana + ' n for predict ainda')
                 pred[d_stt] = pred[d_stt] + (lm_ana,)
                 # print(type(pred[d_stt]))
-                predict(r, b_stt, d_stt, lm_ana, hrly)
+                predict(r, b_stt, d_stt, lm_ana, last_p, hrly)
+                b_stt = last_p[-1]
                 op = 1
         if lm_ana == t_a_rec:
             scan(x, hrly)
@@ -550,14 +554,13 @@ def earley(regras, palavra):
                     for i in hrly:
                         print(hrly[i])
                     break
-            complete(x, b_stt, hrly)
+            complete(x, hrly)
             op = 1
         if op != 1:
-            print('palavra n pertence a gramatica')
-            for i in hrly:
-                print(hrly[i])
-            break
+            b_stt = last_p.pop()
         b_stt += 1
+        print(b_stt)
+        print(last_p)
 
 
 def change_lbl_up():
