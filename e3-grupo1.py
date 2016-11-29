@@ -460,14 +460,18 @@ def swap(tupl):
 
 
 def predict(regras, dt, vrvl, d_state, where_to):
+    print('entrou num predict de ' + vrvl)
     r = regras
     d = dt
     v = vrvl
+    # print(v)
     state = d_state
     vai_pra = where_to
     for i in range(len(r[v])):
+        # print(i)
         aux = [v, '.']
         for j in range(len(r[v][i])):
+            # print(r[v][i][j])
             aux.append(r[v][i][j])
         aux.append([state, state])
         aux.append([])
@@ -478,6 +482,7 @@ def predict(regras, dt, vrvl, d_state, where_to):
 
 
 def scan(dt, linha, d_state, where_to):
+    print('entrou num scan')
     d = dt
     l = linha
     state = d_state
@@ -491,33 +496,37 @@ def scan(dt, linha, d_state, where_to):
 
 
 def complete(dt, elem, way, bckpointer, where_to):
+    print("entrou num complete de " + elem  )
     d = dt
     esq = elem
     stt_to_complete = way[0]
     d_state = way[1]
     stt_to_append = bckpointer
     vai_pra = where_to
-    print(esq)
-    print(stt_to_complete)
+    # print(esq)
+    # print(stt_to_complete)
     for i in range(len(d[stt_to_complete])):
         x = d[stt_to_complete][i]
         dot_ind = x.index('.')
         if x[dot_ind + 1] == esq:
+            x = copy.deepcopy(x)
             x = swap(x)
-            x[-3][1] = d_state
-            x[-2].append(stt_to_append)
-            x[-1] = 'COMPLETE'
             vai_pra += 1
             d[d_state][vai_pra] = x
+            d[d_state][vai_pra][-3][1] = d_state
+            d[d_state][vai_pra][-2].append(stt_to_append)
+            d[d_state][vai_pra][-1] = 'COMPLETE'
     return vai_pra
 
 
 def earley(regras):
+    lb1.delete(0, 'end')
     r = regras
     stt = 0
     d_stt = 0
     chart = {}
     b_e = {}
+    pred = {}
     w = tv3.get()
     print(w)
     w1 = []
@@ -526,34 +535,44 @@ def earley(regras):
             if w.startswith(i):
                 w1.append(i)
                 w = w.replace(i, '', 1)
-    t_a_rec = w1[0]
+    index_termo = 0
+    t_a_rec = w1[index_termo]
     mx_stt = len(w1) + 1
     for j in range(mx_stt):
         chart[j] = {}
         b_e[j] = [0, 0]
+        pred[j] = []
     chart[d_stt][stt] = ['GAMMA', '.', inicial, [0, 0], [], 'INITIAL']
-    b_e[d_stt] += (stt,)
+    mx_stt -= 1
     while d_stt <= mx_stt:
+        # print(d_stt)
         y = b_e[d_stt][0]
+        # print(y)
         error = None
+        # print(error)
         while error is None:
             try:
                 x = chart[d_stt][y]
+                print(x)
                 dot_index = x.index('.')
+                # print(dot_index)
+                # print(x[dot_index + 1])
                 if isinstance(x[dot_index + 1], list):
                     b_e[d_stt][1] = complete(chart, x[0], x[dot_index + 1], y, b_e[d_stt][1])
                 elif x[dot_index + 1] in vrvs:
                     nop = -1
                     vari = x[dot_index + 1]
-                    for i in range(len(chart[d_stt])):
-                        if chart[d_stt][i][0] == vari:
-                            nop = 1
-                        print(nop)
-                        if nop != 1:
-                            print(d_stt)
-                            b_e[d_stt][1] = predict(r, chart, vari, d_stt, b_e[d_stt][1])
+                    if vari in pred[d_stt]:
+                        # print(vari + ' ja foi predict')
+                        nop = 1
+                    # print(nop)
+                    if nop != 1:
+                        pred[d_stt].append(vari)
+                        b_e[d_stt][1] = predict(r, chart, vari, d_stt, b_e[d_stt][1])
+                        # print(b_e[d_stt][1])
                 y += 1
             except KeyError:
+                # print('fez todos predict e complete possivel')
                 error = 1
         y = b_e[d_stt][0]
         error = None
@@ -563,19 +582,28 @@ def earley(regras):
                 dot_index = x.index('.')
                 if x[dot_index + 1] == t_a_rec:
                     tam = b_e[d_stt][1] + len(chart[d_stt + 1])
+                    b_e[d_stt + 1][0] = len(chart[d_stt])
                     b_e[d_stt + 1][1] = scan(chart, x, d_stt, tam)
                 y += 1
             except KeyError:
+                # print('deu keyerror do scan tb')
                 error = 1
+        if index_termo < mx_stt - 1:
+            index_termo += 1
+            # print(index_termo)
+            t_a_rec = w1[index_termo]
+        # print(t_a_rec)
         d_stt += 1
-    for i in range(len(chart[mx_stt])):
+        # print(d_stt)
+    for i in chart[mx_stt]:
         x = chart[mx_stt][i]
+        # print(x)
         if x[0] == 'GAMMA':
-            print('Palavra Reconhecida.')
+            lb1.insert('end', 'Palavra Reconhecida.')
             break
-        else:
-            print('Palavra não reconhecida.')
-            break
+    for i in chart:
+        for j in chart[i]:
+            lb1.insert('end', chart[i][j])
 
 
 def change_lbl_up():
@@ -623,6 +651,9 @@ b0b = tk.Button(f0b, font='Verdana', text='Etapa Seguinte', command=change_lbl_u
 l1 = tk.Label(f1a, font='Verdana', text='Palavra a ser reconhecida: ', justify='left')
 e1 = tk.Entry(f1a, font='Verdana', width=20, textvariable=tv3)
 b1 = tk.Button(f1a, font='Verdana', text='Testar', command=lambda: earley(prsr_dict))
+sb1 = tk.Scrollbar(f1b)
+lb1 = tk.Listbox(f1b, font='Verdana', yscrollcommand=sb1.set)
+sb1.config(command=lb1.yview)
 
 lbls = [l0a, l0b, l0c, l0d, l0e, l0f]
 dirname = filedialog.askdirectory(parent=root, initialdir="/", title='Selecione o Diretório:')
@@ -644,6 +675,7 @@ prsr_dict = hardcopy(rgrs)
 for i in prsr_dict:
     print(i + " : " + str(prsr_dict[i]))
 
+
 f0.pack(expand=1, anchor='w', side='left')
 f0a.pack()
 l0a.pack()
@@ -655,4 +687,7 @@ f1a.pack(anchor='n')
 l1.pack(anchor='n', side='left')
 e1.pack(anchor='n', side='left')
 b1.pack(anchor='n', side='left')
+f1b.pack(anchor='n', fill='both')
+lb1.pack(side='left', fill='both', anchor='n', expand=1)
+sb1.pack(side='right', fill='y')
 root.mainloop()
