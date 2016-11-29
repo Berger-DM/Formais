@@ -455,26 +455,26 @@ def swap(tupl):
     aux2 = list(tupla)
     aux2[ndx] = aux2[aux]
     aux2[aux] = '.'
-    tupla = tuple(aux2)
+    tupla = aux2
     return tupla
 
 
-def predict(regras, stt, d, key, l, dt):
-    print('predict sobre ' + key)
-    count = 0
-    start = len(dt)
-    l.append(start - 1)
-    for i in range(len(regras[key])):
-        l = regras[key][i]
-        y = start + count
-        # print(y)
-        tp = (key, '.')
-        for j in range(len(l)):
-            tp = tp + (l[j],)
-        tp = tp + ('/', stt, d)
-        print(tp)
-        dt[y] = tp
-        count += 1
+def predict(regras, dt, vrvl, d_state, where_to):
+    r = regras
+    d = dt
+    v = vrvl
+    state = d_state
+    vai_pra = where_to
+    for i in range(len(r[v])):
+        aux = [v, '.']
+        for j in range(len(r[v][i])):
+            aux.append(r[v][i][j])
+        aux.append([state, state])
+        aux.append([])
+        aux.append('PREDICT')
+        vai_pra += 1
+        d[state][vai_pra] = aux
+    return vai_pra
 
 
 def scan(l_rly, dt):
@@ -485,21 +485,30 @@ def scan(l_rly, dt):
     dt[y] = p
 
 
-def complete(l_rly, dt):
-    p = copy.deepcopy(l_rly)
-    y = len(dt)
-    for i in dt:
-        z = dt[i]
-        if z[-1] == p[-1]:
-            d_ndx = z.index('.')
-            d_ndx += 1
-            if dt[i][d_ndx] == p[0]:
-                p = swap(p)
-                dt[y] = p
-                break
+def complete(dt, elem, way, bckpointer, where_to):
+    d = dt
+    esq = elem
+    stt_to_complete = way[0]
+    d_state = way[1]
+    stt_to_append = bckpointer
+    vai_pra = where_to
+    print(esq)
+    print(stt_to_complete)
+    for i in range(len(d[stt_to_complete])):
+        x = d[stt_to_complete][i]
+        dot_ind = x.index('.')
+        if x[dot_ind + 1] == esq:
+            x = swap(x)
+            x[-3][1] = d_state
+            x[-2].append(stt_to_append)
+            x[-1] = 'COMPLETE'
+            vai_pra += 1
+            d[d_state][vai_pra] = x
+    return vai_pra
 
 
 def earley(regras):
+    r = regras
     stt = 0
     d_stt = 0
     chart = {}
@@ -517,35 +526,44 @@ def earley(regras):
     for j in range(mx_stt):
         chart[j] = {}
         b_e[j] = []
-    chart[d_stt][stt] = ('GAMMA', '.', inicial, [0, 0], [], 'INITIAL')
+    chart[d_stt][stt] = ['GAMMA', '.', inicial, [0, 0], [], 'INITIAL']
     b_e[d_stt] += (stt,)
     while d_stt <= mx_stt:
         y = b_e[d_stt][0]
-        try:
-            x = chart[d_stt][y]
-            dot_index = x.index('.')
-            if isinstance(x[dot_index + 1], list):
-                # complete
-                pass
-            elif x[dot_index + 1] in vrvs:
-                nop = -1
-                for i in range(len(chart[d_stt])):
-                    if chart[d_stt][i][0] == x[dot_index + 1]:
-                        nop = 1
-                    if nop != 1:
-                        # predict
-                        pass
-            y += 1
-        except KeyError:
-            y = b_e[d_stt][0]
-            x = chart[d_stt][y]
-            dot_index = x.index('.')
-            if x[dot_index + 1] == t_a_rec:
-                # scan
-                pass
-            y += 1
+        error = None
+        while error is None:
+            try:
+                x = chart[d_stt][y]
+                dot_index = x.index('.')
+                if isinstance(x[dot_index + 1], list):
+                    b_e[d_stt][1] = complete(chart, x[0], x[dot_index + 1], y, b_e[d_stt][1])
+                    pass
+                elif x[dot_index + 1] in vrvs:
+                    nop = -1
+                    vari = x[dot_index + 1]
+                    for i in range(len(chart[d_stt])):
+                        if chart[d_stt][i][0] == vari:
+                            nop = 1
+                        if nop != 1:
+                            b_e[d_stt][1] = predict(r, chart, vari, d_stt, b_e[d_stt][1])
+                            pass
+                y += 1
+            except KeyError:
+                error = 1
+        y = b_e[d_stt][0]
+        error = None
+        while error is None:
+            try:
+                x = chart[d_stt][y]
+                dot_index = x.index('.')
+                if x[dot_index + 1] == t_a_rec:
+                    # b_e[d_stt + 1] =
+                    # cont = scan(chart, x, d_stt, b_e[d_stt][1])
+                    pass
+                y += 1
+            except KeyError:
+                error = 1
         d_stt += 1
-
 
 
 def change_lbl_up():
