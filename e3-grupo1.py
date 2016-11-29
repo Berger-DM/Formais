@@ -477,12 +477,17 @@ def predict(regras, dt, vrvl, d_state, where_to):
     return vai_pra
 
 
-def scan(l_rly, dt):
-    y = len(dt)
-    p = copy.deepcopy(l_rly)
-    p = swap(p)
-    p[-1] += 1
-    dt[y] = p
+def scan(dt, linha, d_state, where_to):
+    d = dt
+    l = linha
+    state = d_state
+    vai_pra = where_to
+    l = swap(l)
+    l[-3][1] = state + 1
+    l[-1] = 'SCAN'
+    vai_pra += 1
+    d[state + 1][vai_pra] = l
+    return vai_pra
 
 
 def complete(dt, elem, way, bckpointer, where_to):
@@ -525,7 +530,7 @@ def earley(regras):
     mx_stt = len(w1) + 1
     for j in range(mx_stt):
         chart[j] = {}
-        b_e[j] = []
+        b_e[j] = [0, 0]
     chart[d_stt][stt] = ['GAMMA', '.', inicial, [0, 0], [], 'INITIAL']
     b_e[d_stt] += (stt,)
     while d_stt <= mx_stt:
@@ -537,16 +542,16 @@ def earley(regras):
                 dot_index = x.index('.')
                 if isinstance(x[dot_index + 1], list):
                     b_e[d_stt][1] = complete(chart, x[0], x[dot_index + 1], y, b_e[d_stt][1])
-                    pass
                 elif x[dot_index + 1] in vrvs:
                     nop = -1
                     vari = x[dot_index + 1]
                     for i in range(len(chart[d_stt])):
                         if chart[d_stt][i][0] == vari:
                             nop = 1
+                        print(nop)
                         if nop != 1:
+                            print(d_stt)
                             b_e[d_stt][1] = predict(r, chart, vari, d_stt, b_e[d_stt][1])
-                            pass
                 y += 1
             except KeyError:
                 error = 1
@@ -557,13 +562,20 @@ def earley(regras):
                 x = chart[d_stt][y]
                 dot_index = x.index('.')
                 if x[dot_index + 1] == t_a_rec:
-                    # b_e[d_stt + 1] =
-                    # cont = scan(chart, x, d_stt, b_e[d_stt][1])
-                    pass
+                    tam = b_e[d_stt][1] + len(chart[d_stt + 1])
+                    b_e[d_stt + 1][1] = scan(chart, x, d_stt, tam)
                 y += 1
             except KeyError:
                 error = 1
         d_stt += 1
+    for i in range(len(chart[mx_stt])):
+        x = chart[mx_stt][i]
+        if x[0] == 'GAMMA':
+            print('Palavra Reconhecida.')
+            break
+        else:
+            print('Palavra não reconhecida.')
+            break
 
 
 def change_lbl_up():
